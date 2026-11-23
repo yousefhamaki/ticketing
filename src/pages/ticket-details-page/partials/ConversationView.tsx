@@ -98,7 +98,11 @@ const ConversationView = ({
       {canWrite ? (
         <div style={{ marginTop: 14 }}>
           <Tabs activeKey={tab} onChange={setTab} size="small">
-            <Tabs.TabPane tab={labels("reply")} key="client" />
+            {/* 23-11-2026 OLD: the client also read "Reply to client"  NEW: "Reply" for the client */}
+            <Tabs.TabPane
+              tab={isStaff ? labels("reply") : labels("clientReply")}
+              key="client"
+            />
             {isStaff ? (
               <Tabs.TabPane tab={labels("internalNote")} key="internal" />
             ) : null}

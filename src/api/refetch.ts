@@ -42,13 +42,46 @@ const buildUrl = (apiId: ApiIdType, params?: RecordType) => {
   return `${baseApiUrl}/${API_IDS[apiId]}${query ? `?${query}` : ""}`;
 };
 
+/*
+ * 23-11-2026 NEW: the database (AR8MSWIN1256) cannot hold letters such as
+ * n-tilde or s-cedilla, so the server sends them as \uXXXX inside the text
+ * (ETK_UTIL_PKG.nesc). They are turned back into letters here, once, for every
+ * answer (screen texts, error messages, notification titles).
+ * REASON : many languages (script ETKT_11).  BENEFIT: no screen has to care.
+ */
+const UNICODE_ESCAPE = /\\u([0-9a-fA-F]{4})/g;
+
+export const decodeUnicode = (value: string) =>
+  value.indexOf("\\u") < 0
+    ? value
+    : value.replace(UNICODE_ESCAPE, (match, hex) =>
+        String.fromCharCode(parseInt(hex, 16)),
+      );
+
+const decodeDeep = (value: any): any => {
+  if (typeof value === "string") {
+    return decodeUnicode(value);
+  }
+  if (Array.isArray(value)) {
+    return value.map(decodeDeep);
+  }
+  if (value && typeof value === "object") {
+    const next: RecordType = {};
+    Object.keys(value).forEach((key) => {
+      next[key] = decodeDeep(value[key]);
+    });
+    return next;
+  }
+  return value;
+};
+
 const resolveResponse = async (
   response: Response,
 ): Promise<RequestResponse> => {
   let body: RecordType = {};
 
   try {
-    body = await response.json();
+    body = decodeDeep(await response.json());
   } catch (error) {
     body = {};
   }

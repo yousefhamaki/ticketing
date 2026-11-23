@@ -7,11 +7,16 @@
  * trend and - for a team - the members table. The server decides what a scope
  * is allowed to mean, so the screen only asks.
  *
- * Phase 2 adds scope "company" with the client comparison, phase 3 the
- * client's own board. Both arrive as a new scope on this same screen.
+ * 23-11-2026 NEW: scope "company" for management (script ETKT_12):
+ *   OLD    : management had "mine / team" only; a manager with no team saw zeros.
+ *   NEW    : "company" = every ticket, or one team when a team is chosen,
+ *            with a teams table and the clients with the most tickets.
+ *            Management opens the board on "company".
+ *   REASON : the owner's first screen was empty (review of 23-11-2026).
+ * Phase 3 adds the client's own board as another scope on this same screen.
  */
 import React, { useCallback, useMemo, useState } from "react";
-import { DatePicker, Radio, Spin, Tag } from "antd";
+import { DatePicker, Radio, Select, Spin, Tag } from "antd";
 import { ColumnProps } from "antd/lib/table";
 import moment from "moment";
 import { useTheme } from "styled-components";
@@ -24,7 +29,7 @@ import {
   SubText,
 } from "../../components/commons";
 import ExsysTable from "../../components/exsys-table";
-import { useBasicQuery } from "../../hooks";
+import { useBasicQuery, useLookups } from "../../hooks";
 import { isManagement, isSupervisor, useAppConfig } from "../../store";
 import { useLabels } from "../../labels";
 import ChartsView from "./partials/ChartsView";
@@ -50,6 +55,8 @@ interface PayloadType {
   by_module: any[];
   trend: any[];
   members: any[];
+  teams: any[];
+  clients: any[];
 }
 
 const EMPTY: PayloadType = {
@@ -63,6 +70,8 @@ const EMPTY: PayloadType = {
   by_module: [],
   trend: [],
   members: [],
+  teams: [],
+  clients: [],
 };
 
 /* the periods a daily board actually gets asked for */
@@ -77,8 +86,12 @@ const DashboardPage = () => {
   const labels = useLabels();
   const theme = useTheme();
   const { user } = useAppConfig();
+  const { lookups } = useLookups();
+  const management = !!user && isManagement(user);
+  const firstScope = management ? "company" : "me";
   const [payload, setPayload] = useState<PayloadType>(EMPTY);
-  const [scope, setScope] = useState("me");
+  const [scope, setScope] = useState(firstScope);
+  const [teamId, setTeamId] = useState<number | undefined>(undefined);
   const [period, setPeriod] = useState("30");
   const [range, setRange] = useState<[moment.Moment, moment.Moment]>([
     moment().subtract(29, "days"),
@@ -87,7 +100,7 @@ const DashboardPage = () => {
 
   const { loading, runQuery } = useBasicQuery<PayloadType>({
     apiId: "dashboard",
-    params: { scope: "me" },
+    params: { scope: firstScope },
     callOnFirstRender: true,
     onResponse: ({ apiValues, error }) => {
       setPayload(!error && apiValues ? { ...EMPTY, ...apiValues } : EMPTY);
@@ -95,14 +108,20 @@ const DashboardPage = () => {
   });
 
   const load = useCallback(
-    (nextScope: string, from: moment.Moment, to: moment.Moment) => {
+    (
+      nextScope: string,
+      from: moment.Moment,
+      to: moment.Moment,
+      nextTeam: number | undefined = teamId,
+    ) => {
       runQuery({
         scope: nextScope,
         from_date: from.format(DATE_FORMAT),
         to_date: to.format(DATE_FORMAT),
+        team_id: nextScope === "company" ? nextTeam : undefined,
       });
     },
-    [runQuery],
+    [runQuery, teamId],
   );
 
   const onPeriod = useCallback(
@@ -179,13 +198,45 @@ const DashboardPage = () => {
     { title: labels("rating"), dataIndex: "avg_rating", width: 110 },
   ];
 
+  const lateTag = (value: number) =>
+    value > 0 ? <Tag color={theme.colors.error}>{value}</Tag> : value;
+
+  const teamColumns: ColumnProps<any>[] = [
+    { title: labels("team"), dataIndex: "team_name" },
+    { title: labels("members"), dataIndex: "members", width: 100 },
+    { title: labels("tickets"), dataIndex: "tickets", width: 100 },
+    { title: labels("viewOpen"), dataIndex: "open_now", width: 110 },
+    { title: labels("viewUnaccepted"), dataIndex: "unaccepted", width: 130 },
+    { title: labels("resolvedLabel"), dataIndex: "resolved", width: 110 },
+    { title: labels("slaLate"), dataIndex: "late", width: 100, render: lateTag },
+    { title: labels("avgResolve"), dataIndex: "avg_hours", width: 130 },
+    { title: labels("rating"), dataIndex: "avg_rating", width: 110 },
+  ];
+
+  const clientColumns: ColumnProps<any>[] = [
+    { title: labels("client"), dataIndex: "client_name" },
+    { title: labels("tickets"), dataIndex: "tickets", width: 100 },
+    { title: labels("viewOpen"), dataIndex: "open_now", width: 110 },
+    { title: labels("slaLate"), dataIndex: "late", width: 100, render: lateTag },
+    { title: labels("viewAngry"), dataIndex: "angry", width: 130, render: lateTag },
+    { title: labels("rating"), dataIndex: "avg_rating", width: 110 },
+  ];
+
   return (
     <>
       <Flex justify="space-between" margin="0 0 12px" wrap gap={10}>
         <div>
           <PageTitle>{labels("home")}</PageTitle>
           <SubText>
-            {user ? `${user.full_name} · ${user.team_name || user.role}` : ""}
+            {/* OLD: team_name || user.role  -> showed "MGT" for management
+                NEW: team_name, else "Management" for management users
+                REASON: a role code is not text for people (owner saw "MGT") */}
+            {user
+              ? `${user.full_name} · ${
+                  user.team_name ||
+                  (user.management_flag === "Y" ? labels("managementRole") : "")
+                }`
+              : ""}
           </SubText>
         </div>
 
@@ -196,9 +247,34 @@ const DashboardPage = () => {
               buttonStyle="solid"
               onChange={(event) => onScope(event.target.value)}
             >
+              {management ? (
+                <Radio.Button value="company">{labels("companyScope")}</Radio.Button>
+              ) : null}
               <Radio.Button value="me">{labels("viewMine")}</Radio.Button>
-              <Radio.Button value="team">{labels("team")}</Radio.Button>
+              {!management || (user && user.team_id) ? (
+                <Radio.Button value="team">{labels("team")}</Radio.Button>
+              ) : null}
             </Radio.Group>
+          ) : null}
+
+          {management && scope === "company" ? (
+            <Select
+              allowClear
+              style={{ width: 180 }}
+              placeholder={labels("allTeams")}
+              value={teamId}
+              onChange={(value?: number) => {
+                const next = value ? Number(value) : undefined;
+                setTeamId(next);
+                load(scope, range[0], range[1], next);
+              }}
+            >
+              {lookups.teams.map((item) => (
+                <Select.Option key={item.key} value={Number(item.key)}>
+                  {item.value}
+                </Select.Option>
+              ))}
+            </Select>
           ) : null}
 
           <Radio.Group
@@ -251,6 +327,30 @@ const DashboardPage = () => {
         byModule={payload.by_module}
         trend={payload.trend}
       />
+
+      {scope === "company" && payload.teams.length ? (
+        <ShadowSection style={{ marginTop: 12 }}>
+          <SubText>{labels("teams")}</SubText>
+          <ExsysTable
+            rowKey="team_id"
+            columns={teamColumns}
+            dataSource={payload.teams}
+            scrollX
+          />
+        </ShadowSection>
+      ) : null}
+
+      {scope === "company" && payload.clients.length ? (
+        <ShadowSection style={{ marginTop: 12 }}>
+          <SubText>{labels("topClients")}</SubText>
+          <ExsysTable
+            rowKey="client_id"
+            columns={clientColumns}
+            dataSource={payload.clients}
+            scrollX
+          />
+        </ShadowSection>
+      ) : null}
 
       {scope === "team" && payload.members.length ? (
         <ShadowSection style={{ marginTop: 12 }}>

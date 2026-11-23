@@ -14,6 +14,7 @@ import { Flex, PageTitle, ShadowSection } from "../../components/commons";
 import ExsysTable from "../../components/exsys-table";
 import { useBasicQuery } from "../../hooks";
 import { useLabels } from "../../labels";
+import { usePriorityName } from "../../components/ticket-bits";
 import { ticketPath } from "../../routes/constants";
 
 const PAGE_SIZE = 25;
@@ -22,6 +23,7 @@ const EscalationPage = () => {
   const labels = useLabels();
   const theme = useTheme();
   const history = useHistory();
+  const priorityName = usePriorityName();
   const [rows, setRows] = useState<any[]>([]);
   const [offset, setOffset] = useState(0);
 
@@ -51,7 +53,13 @@ const EscalationPage = () => {
     { title: labels("ticketNo"), dataIndex: "ticket_id", width: 90 },
     { title: labels("title"), dataIndex: "title" },
     { title: labels("client"), dataIndex: "client_name", width: 170 },
-    { title: labels("priority"), dataIndex: "company_priority", width: 90 },
+    // 23-11-2026 OLD: the priority number  NEW: its name
+    {
+      title: labels("priority"),
+      dataIndex: "company_priority",
+      width: 110,
+      render: (value: number) => priorityName(value),
+    },
     { title: labels("escLevel"), dataIndex: "esc_level_name", width: 150 },
     { title: labels("team"), dataIndex: "team_name", width: 150 },
     { title: labels("oncall"), dataIndex: "oncall_name", width: 150 },

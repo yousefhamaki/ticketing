@@ -114,12 +114,19 @@ const TicketDetailsPage = () => {
                 tab={labels("conversation")}
                 key="conversation"
               >
-                <div style={{ marginBottom: 14 }}>
-                  <SubText>{labels("description")}</SubText>
-                  <div style={{ whiteSpace: "pre-wrap" }}>
-                    {ticket.description}
+                {/* 23-11-2026 OLD: the description was shown here AND as the
+                    first message (the server saves it as the first message).
+                    NEW: shown here only when no message carries it. */}
+                {payload.messages.some(
+                  (item) => (item.body || "").trim() === (ticket.description || "").trim(),
+                ) ? null : (
+                  <div style={{ marginBottom: 14 }}>
+                    <SubText>{labels("description")}</SubText>
+                    <div style={{ whiteSpace: "pre-wrap" }}>
+                      {ticket.description}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <ConversationView
                   ticketId={ticket.ticket_id}

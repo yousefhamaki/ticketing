@@ -12,25 +12,73 @@ import { isManagement, isStaffUser, useAppConfig } from "../../store";
 import { useLabels } from "../../labels";
 import { useRequestRights } from "../../hooks";
 
+/*
+ * 23-11-2026 - new look (same idea as the Cure+ side menu):
+ *   OLD    : flat grey column, square items.
+ *   NEW    : white rounded card floating on the page background, rounded
+ *            items, the selected item filled with the brand blue.
+ *   REASON : Khaled - match Cure+.   BENEFIT: same product look.
+ *   Menu items and role rules are unchanged.
+ */
 const Side = styled.div`
-  width: 210px;
+  width: 228px;
   flex-shrink: 0;
-  background: ${({ theme }) => theme.colors.desktopNavBackground};
-  border-inline-end: 1px solid ${({ theme }) => theme.colors.desktopNavDivider};
-  height: 100%;
+  margin: 12px;
+  margin-inline-end: 0;
+  padding: 10px 8px;
+  border-radius: 16px;
+  background: ${({ theme }) => theme.colors.background};
+  border: 1px solid ${({ theme }) => theme.colors.desktopNavDivider};
+  box-shadow: 0 2px 8px ${({ theme }) => theme.colors.shadow};
   overflow-y: auto;
 
   .ant-menu {
     background: transparent;
-    border: none;
+    border: none !important;
     color: ${({ theme }) => theme.colors.desktopNavText};
   }
-  .ant-menu-item {
+  .ant-menu-inline .ant-menu-item,
+  .ant-menu-inline .ant-menu-submenu-title {
+    height: 42px;
+    line-height: 42px;
+    margin: 4px 0 !important;
+    width: 100%;
+    border-radius: 12px;
     color: ${({ theme }) => theme.colors.desktopNavText};
+    font-weight: 500;
   }
-  .ant-menu-item-selected {
-    background: ${({ theme }) => theme.colors.menuSelected} !important;
+  .ant-menu-inline .ant-menu-item::after {
+    display: none;
+  }
+  .ant-menu-item .anticon,
+  .ant-menu-submenu-title .anticon {
+    font-size: 16px;
+  }
+  .ant-menu-item:hover,
+  .ant-menu-submenu-title:hover {
+    background: ${({ theme }) => theme.colors.menuHover};
     color: ${({ theme }) => theme.colors.primary};
+  }
+  .ant-menu-item-selected,
+  .ant-menu:not(.ant-menu-horizontal) .ant-menu-item-selected {
+    background: ${({ theme }) => theme.colors.primary} !important;
+    color: ${({ theme }) => theme.colors.onAccent} !important;
+    box-shadow: 0 4px 10px ${({ theme }) => theme.colors.primary}40;
+  }
+  .ant-menu-item-selected .anticon,
+  .ant-menu-item-selected a {
+    color: ${({ theme }) => theme.colors.onAccent};
+  }
+  .ant-menu-sub.ant-menu-inline {
+    background: transparent;
+  }
+
+  @media (max-width: 800px) {
+    width: 64px;
+    .ant-menu-item span,
+    .ant-menu-submenu-title span span {
+      display: none;
+    }
   }
 `;
 

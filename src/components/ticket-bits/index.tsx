@@ -6,6 +6,21 @@ import React from "react";
 import { Tag, Icon, Tooltip } from "antd";
 import styled, { useTheme } from "styled-components";
 import { useLabels } from "../../labels";
+import { useLookups } from "../../hooks";
+
+/* 23-11-2026 NEW: priority number -> its name from lookups (was shown as a bare number) */
+export const usePriorityName = () => {
+  const { lookups } = useLookups();
+  return (priority?: number | string) => {
+    if (priority === null || priority === undefined || priority === "") {
+      return "";
+    }
+    const found = lookups.priorities.find(
+      (item) => String(item.key) === String(priority),
+    );
+    return found ? found.value : String(priority);
+  };
+};
 
 /* company priority 1..5 -> the colored bar on the ticket card */
 const PRIORITY_COLORS: { [key: number]: string } = {

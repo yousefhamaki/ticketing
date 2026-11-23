@@ -70,6 +70,9 @@ export const API_IDS = {
   userRequestActionDml: "etk_user_request_pkg/user_request_action_dml",
   clientAdmins: "etk_user_request_pkg/client_admins_data",
   clientAdminDml: "etk_user_request_pkg/client_admin_dml",
+  // languages (script ETKT_11, 23-11-2026): no authorization, the login page needs them
+  languages: "etk_language_pkg/languages_data",
+  labels: "etk_language_pkg/labels_data",
 } as const;
 
 export type ApiIdType = keyof typeof API_IDS;

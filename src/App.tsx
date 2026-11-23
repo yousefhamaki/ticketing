@@ -3,7 +3,7 @@ import { BrowserRouter } from "react-router-dom";
 import AppThemeProvider from "./theme";
 import AppGlobalStyles from "./AppGlobalStyles";
 import { AppConfigProvider, useMakeSelectCurrentLanguageId } from "./store";
-import { LabelsProvider } from "./labels";
+import { LabelsProvider, useLanguages } from "./labels";
 import {
   ContractStatusProvider,
   LookupsProvider,
@@ -12,23 +12,24 @@ import {
 import AppRoutes from "./routes";
 
 /*
- * Arabic (planguageid = 2) lays the page out RTL.
+ * The page direction follows the language.
  * antd v3 has no ConfigProvider direction prop - that arrived in v4 - so the
  * direction is set on <html>, which is what the v3 projects do.
+ * 23-11-2026 OLD: rtl only for planguageid = 2
+ *            NEW: rtl for every right-to-left language of ETK_LANGUAGE (Arabic, Urdu, Kurdish)
+ *            REASON: many languages (script ETKT_11)
  */
 const DirectionGate = ({ children }: { children: React.ReactNode }) => {
   const languageId = useMakeSelectCurrentLanguageId();
+  const { current, isRtl } = useLanguages();
 
   useEffect(() => {
-    document.documentElement.setAttribute(
-      "dir",
-      languageId === 2 ? "rtl" : "ltr",
-    );
+    document.documentElement.setAttribute("dir", isRtl ? "rtl" : "ltr");
     document.documentElement.setAttribute(
       "lang",
-      languageId === 2 ? "ar" : "en",
+      current ? current.language_code : languageId === 2 ? "ar" : "en",
     );
-  }, [languageId]);
+  }, [languageId, current, isRtl]);
 
   return <>{children}</>;
 };
@@ -37,8 +38,9 @@ const App = () => (
   <AppConfigProvider>
     <AppThemeProvider>
       <AppGlobalStyles />
-      <DirectionGate>
-        <LabelsProvider>
+      {/* 23-11-2026: LabelsProvider now outside DirectionGate - the gate reads the language direction from it */}
+      <LabelsProvider>
+        <DirectionGate>
           <LookupsProvider>
             <ContractStatusProvider>
               <RequestRightsProvider>
@@ -48,8 +50,8 @@ const App = () => (
               </RequestRightsProvider>
             </ContractStatusProvider>
           </LookupsProvider>
-        </LabelsProvider>
-      </DirectionGate>
+        </DirectionGate>
+      </LabelsProvider>
     </AppThemeProvider>
   </AppConfigProvider>
 );

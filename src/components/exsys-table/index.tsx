@@ -12,6 +12,7 @@ import React, { useMemo } from "react";
 import { Table } from "antd";
 import { ColumnProps } from "antd/lib/table";
 import styled from "styled-components";
+import { useLabels } from "../../labels";
 
 const TableWrapper = styled.div`
   .ant-table {
@@ -79,6 +80,7 @@ function ExsysTable<T extends { [key: string]: any }>({
   );
 
   const paged = !!onPageChange && pageSize !== undefined;
+  const labels = useLabels();
 
   return (
     <TableWrapper>
@@ -89,6 +91,9 @@ function ExsysTable<T extends { [key: string]: any }>({
         columns={columns}
         dataSource={dataSource}
         loading={loading}
+        // 23-11-2026 OLD: antd default "No Data" (English in every language)
+        //            NEW: the empty text in the user language (label noData)
+        locale={{ emptyText: labels("noData") }}
         scroll={scrollX ? { x: scrollX } : undefined}
         rowClassName={(record) => {
           const classes: string[] = [];

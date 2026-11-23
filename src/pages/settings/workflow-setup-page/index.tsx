@@ -18,7 +18,7 @@ import { useTheme } from "styled-components";
 import { Flex, PageTitle, ShadowSection } from "../../../components/commons";
 import SetupGrid from "../../../components/setup-grid";
 import { useBasicQuery, useLookups } from "../../../hooks";
-import { useLabels } from "../../../labels";
+import { useIsArabic, useLabels } from "../../../labels";
 
 interface PayloadType {
   statuses: any[];
@@ -42,6 +42,7 @@ const EMPTY: PayloadType = {
 
 const WorkflowSetupPage = () => {
   const labels = useLabels();
+  const isArabic = useIsArabic();
   const theme = useTheme();
   const { lookups } = useLookups();
   const [payload, setPayload] = useState<PayloadType>(EMPTY);
@@ -111,15 +112,46 @@ const WorkflowSetupPage = () => {
     },
   ];
 
+  /* 23-11-2026 OLD: status code (B, C, X), field code (BLOCK_REASON), English label, "text"/"list"
+     NEW: status name, the field in words, the label in the user language, Text / List
+     REASON: codes were shown to people (review of 23-11-2026) */
+  const FIELD_NAMES: { [code: string]: string } = {
+    ROOT_CAUSE_ID: "rootCause",
+    RESOLUTION_NOTE: "resolutionNote",
+    BLOCK_REASON: "blockReason",
+    CANCEL_REASON: "cancelReason",
+  };
+  const statusNameOf = (code: string) => {
+    const found = payload.statuses.find((item) => item.status_code === code);
+    return found ? found.status_name : code;
+  };
+
   const fieldColumns: ColumnProps<any>[] = [
-    { title: labels("status"), dataIndex: "status_code", width: 80 },
-    { title: labels("fieldCode"), dataIndex: "field_code", width: 190 },
-    { title: labels("label"), dataIndex: "label_p" },
+    {
+      title: labels("status"),
+      dataIndex: "status_code",
+      width: 140,
+      render: (value: string) => statusNameOf(value),
+    },
+    {
+      title: labels("fieldCode"),
+      dataIndex: "field_code",
+      width: 190,
+      render: (value: string) =>
+        FIELD_NAMES[value] ? labels(FIELD_NAMES[value]) : value,
+    },
+    {
+      title: labels("label"),
+      dataIndex: "label_p",
+      render: (value: string, record: any) =>
+        isArabic ? record.label_s || value : value,
+    },
     {
       title: labels("inputType"),
       dataIndex: "input_type",
       width: 110,
-      render: (value: string) => (value === "L" ? "list" : "text"),
+      render: (value: string) =>
+        value === "L" ? labels("inputList") : labels("inputText"),
     },
     {
       title: labels("clientVisible"),
@@ -220,7 +252,7 @@ const WorkflowSetupPage = () => {
               canAdd
               canDelete
               onDone={reload}
-              note="A status with no way out would strand its tickets, so the last move cannot be removed."
+              note={labels("hintTransitions")}
               newDefaults={{ actor: "S", client_ticket_only_flag: "N" }}
               fields={[
                 {

@@ -12,7 +12,12 @@ import {
   Flex,
   ShadowSection,
 } from "../../../components/commons";
-import { PriorityTag, SlaTag, StatusTag } from "../../../components/ticket-bits";
+import {
+  PriorityTag,
+  SlaTag,
+  StatusTag,
+  usePriorityName,
+} from "../../../components/ticket-bits";
 import { useLabels } from "../../../labels";
 import { TicketType } from "../index.interface";
 
@@ -33,6 +38,7 @@ const PropertiesView = ({
 }) => {
   const labels = useLabels();
   const theme = useTheme();
+  const priorityName = usePriorityName();
 
   const hasContext =
     ticket.ctx_page_name || ticket.ctx_user_name || ticket.ctx_error;
@@ -47,8 +53,9 @@ const PropertiesView = ({
           />
           <PriorityTag
             priority={ticket.company_priority}
-            priorityName={String(
-              ticket.company_priority || ticket.client_priority || "",
+            // 23-11-2026 OLD: the number ("2")  NEW: the priority name
+            priorityName={priorityName(
+              ticket.company_priority || ticket.client_priority,
             )}
           />
           {ticket.contract_expired_flag === "Y" ? (
@@ -72,11 +79,11 @@ const PropertiesView = ({
             <Field label={labels("assignee")} value={ticket.assignee_name} />
             <Field
               label={labels("clientPriority")}
-              value={ticket.client_priority}
+              value={priorityName(ticket.client_priority)}
             />
             <Field
               label={labels("companyPriority")}
-              value={ticket.company_priority}
+              value={priorityName(ticket.company_priority)}
             />
             <Field label={labels("acceptDue")} value={ticket.accept_due_int} />
             <Field

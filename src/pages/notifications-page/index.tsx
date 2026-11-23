@@ -17,6 +17,25 @@ import { ticketPath } from "../../routes/constants";
 
 const PAGE_SIZE = 25;
 
+/* notification type code -> label key (ETK_NOTIFICATION.NOTIF_TYPE) */
+const NOTIF_TYPES: { [code: string]: string } = {
+  NEW: "ntNew",
+  ESCALATE: "ntEscalate",
+  ASSIGN: "ntAssign",
+  TRANSFER: "ntTransfer",
+  REPLY: "ntReply",
+  REJECT: "ntReject",
+  CONTRACT: "ntContract",
+  CONTRACT_W: "ntContractWarn",
+  CONTRACT_B: "ntContractStop",
+  USERREQ: "ntUserRequest",
+  USERREQ_A: "ntUserRequestOk",
+  USERREQ_R: "ntUserRequestNo",
+};
+
+const notifTypeName = (labels: (key: string) => string, code: string) =>
+  NOTIF_TYPES[code] ? labels(NOTIF_TYPES[code]) : code;
+
 const NotificationsPage = () => {
   const labels = useLabels();
   const theme = useTheme();
@@ -67,10 +86,11 @@ const NotificationsPage = () => {
       title: labels("type"),
       dataIndex: "notif_type",
       width: 130,
-      render: (value: string) => <Tag>{value}</Tag>,
+      // 23-11-2026 OLD: the raw code (ASSIGN, TRANSFER, CONTRACT_B ...)  NEW: words
+      render: (value: string) => <Tag>{notifTypeName(labels, value)}</Tag>,
     },
     { title: labels("ticketNo"), dataIndex: "ticket_id", width: 100 },
-    { title: labels("submittedDate"), dataIndex: "notif_date", width: 150 },
+    { title: labels("date"), dataIndex: "notif_date", width: 150 },
   ];
 
   return (

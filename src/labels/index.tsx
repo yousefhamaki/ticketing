@@ -6,8 +6,15 @@
  * same `useLabels()` shape: when the table is added, only this file changes.
  * 1 = English, 2 = Arabic (EXSYS08 ids), same as `planguageid` on every service.
  */
-import React, { createContext, useContext, useMemo } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { useMakeSelectCurrentLanguageId } from "../store";
+import { getRequest } from "../api";
 
 const LABELS: { [key: string]: [string, string] } = {
   appName: ["EXSYS Ticketing System", "نظام تيكتات اكسس"],
@@ -29,6 +36,67 @@ const LABELS: { [key: string]: [string, string] } = {
     "The password must be at least 8 characters.",
     "كلمة المرور 8 حروف على الأقل.",
   ],
+  // login page and app shell (23-11-2026, new Cure+ look)
+  welcomeBack: ["Welcome back", "مرحباً بعودتك"],
+  signInToContinue: ["Please sign in to continue.", "سجّل الدخول للمتابعة."],
+  heroTitle1: ["EXSYS Support", "دعم اكسس"],
+  heroTitle2: ["Ticketing System", "نظام التيكتات"],
+  heroText: [
+    "One place for client requests, internal tasks and follow-up, with clear response times for every ticket.",
+    "مكان واحد لطلبات العملاء والمهام الداخلية ومتابعتها، بمواعيد استجابة واضحة لكل تيكت.",
+  ],
+  featSupport: ["Client support", "دعم العملاء"],
+  featSla: ["SLA follow-up", "متابعة الـ SLA"],
+  featAi: ["AI assistant", "مساعد ذكي"],
+  featSecure: ["Secure access", "دخول آمن"],
+  rightsReserved: [
+    "All rights reserved © Exsys Solutions",
+    "جميع الحقوق محفوظة © Exsys Solutions",
+  ],
+  managementRole: ["Management", "الإدارة"],
+  // 23-11-2026 (script ETKT_12): company board, internal task, codes shown as words
+  companyScope: ["Company", "الشركة"],
+  allTeams: ["All teams", "كل الفرق"],
+  topClients: ["Clients with the most tickets", "العملاء الأكثر تيكتات"],
+  newTask: ["New internal task", "تاسك داخلي جديد"],
+  taskCreated: ["The task was created.", "تم إنشاء التاسك."],
+  dueDate: ["Due date", "تاريخ الاستحقاق"],
+  date: ["Date", "التاريخ"],
+  clientReply: ["Reply", "رد"],
+  actAccept: ["Accepted", "تم الاستلام"],
+  actStatus: ["Status changed", "تغيير الحالة"],
+  actTransfer: ["Transferred", "تحويل"],
+  actAssign: ["Assigned", "توزيع"],
+  actMerge: ["Merged", "دمج"],
+  actPriority: ["Priority changed", "تغيير الأولوية"],
+  actEscalate: ["Escalated", "تصعيد"],
+  actCost: ["Cost changed", "تغيير التكلفة"],
+  actProblem: ["Linked to a problem", "ربط بمشكلة"],
+  autoEscalation: ["Automatic escalation", "تصعيد تلقائي"],
+  systemActor: ["System", "النظام"],
+  ntNew: ["New ticket", "تيكت جديد"],
+  ntEscalate: ["Escalation", "تصعيد"],
+  ntAssign: ["Assigned to you", "مسند إليك"],
+  ntTransfer: ["Transfer", "تحويل"],
+  ntReply: ["Reply", "رد"],
+  ntReject: ["Solution refused", "رفض الحل"],
+  ntContract: ["Contract", "العقد"],
+  ntContractWarn: ["Contract ending", "العقد قارب على الانتهاء"],
+  ntContractStop: ["Support stopped", "وقف الدعم"],
+  ntUserRequest: ["User request", "طلب مستخدم"],
+  ntUserRequestOk: ["Request approved", "تمت الموافقة على الطلب"],
+  ntUserRequestNo: ["Request refused", "تم رفض الطلب"],
+  inputText: ["Text", "نص"],
+  inputList: ["List", "قائمة"],
+  hintTransitions: ["A status with no way out would leave its tickets stuck, so its last move cannot be removed.", "الحالة التي ليس لها مخرج ستُعلّق تيكتاتها، لذلك لا يمكن حذف آخر انتقال منها."],
+  hintSettings: ["The packages read these values while they run; each value is checked before it is saved.", "تقرأ الباكدجات هذه القيم أثناء التشغيل، وتُراجَع كل قيمة قبل الحفظ."],
+  hintModules: ["The module id is the same as in the EXSYS menu (EX_PAGE_MASTER).", "رقم الموديول هو نفسه الموجود في قائمة اكسس (EX_PAGE_MASTER)."],
+  hintBranchTypes: ["The weight divides the number of tickets in every comparison between clients.", "يُقسَم عدد التيكتات على الوزن في كل مقارنة بين العملاء."],
+  hintAiModels: ["Each purpose has one default model only.", "لكل غرض موديل افتراضي واحد فقط."],
+  internalSla: ["Internal SLA", "الـ SLA الداخلي"],
+  escMode: ["Escalation mode", "طريقة التصعيد"],
+  escModeFixed: ["Fixed minutes", "دقائق ثابتة"],
+  escModePct: ["Share of the SLA", "نسبة من الـ SLA"],
   // navigation
   home: ["Home", "الرئيسية"],
   tickets: ["Tickets", "التيكتات"],
@@ -188,8 +256,8 @@ const LABELS: { [key: string]: [string, string] } = {
   screens: ["Screens", "الشاشات"],
   usedBy: ["Used by", "مستخدم في"],
   lockedField: [
-    "Not editable: the packages read it to decide what closed means.",
-    "غير قابل للتعديل: الباكدجات بتقراه عشان تعرف معنى 'مغلق'.",
+    "Not editable: the packages read it to know what closed means.",
+    "غير قابل للتعديل: الباكدجات تقرؤه لتعرف معنى «مغلق».",
   ],
   add: ["Add", "إضافة"],
   edit: ["Edit", "تعديل"],
@@ -297,27 +365,121 @@ const LABELS: { [key: string]: [string, string] } = {
 
 type LabelKey = keyof typeof LABELS;
 
-const LabelsContext = createContext<(key: LabelKey) => string>(
-  (key) => String(key),
-);
+/*
+ * 23-11-2026 - many languages (script ETKT_11)
+ *   OLD    : two languages only, from the dictionary above.
+ *   NEW    : the active languages come from ETK_LANGUAGE (languages_data) and the
+ *            texts of the chosen language from ETK_LABEL (labels_data). The
+ *            dictionary above stays as the fallback (English / Arabic) while the
+ *            texts load or if the service cannot be reached.
+ *   REASON : Khaled - EXSYS works in many languages; the screens must too.
+ *   BENEFIT: a new language or a corrected word is a row in ETK_LABEL, no new build.
+ */
+export interface LanguageType {
+  language_id: number;
+  language_code: string;
+  language_name: string;
+  native_name: string;
+  direction: "rtl" | "ltr";
+}
+
+/* used until languages_data answers (same ids as EXSYS.EXSYS01) */
+const FALLBACK_LANGUAGES: LanguageType[] = [
+  { language_id: 1, language_code: "en", language_name: "English", native_name: "English", direction: "ltr" },
+  { language_id: 2, language_code: "ar", language_name: "Arabic", native_name: "العربية", direction: "rtl" },
+];
+/* right-to-left EXSYS languages: Arabic, Urdu, Kurdish */
+const RTL_IDS = [2, 4, 13];
+
+interface LabelsContextProps {
+  translate: (key: LabelKey) => string;
+  languages: LanguageType[];
+  current?: LanguageType;
+  isRtl: boolean;
+}
+
+const LabelsContext = createContext<LabelsContextProps>({
+  translate: (key) => String(key),
+  languages: FALLBACK_LANGUAGES,
+  isRtl: false,
+});
 
 export const LabelsProvider = ({ children }: { children: React.ReactNode }) => {
   const languageId = useMakeSelectCurrentLanguageId();
+  const [languages, setLanguages] = useState<LanguageType[]>(FALLBACK_LANGUAGES);
+  const [texts, setTexts] = useState<{ [key: string]: string }>({});
 
-  const translate = useMemo(() => {
-    const index = languageId === 2 ? 1 : 0;
-    return (key: LabelKey) => {
-      const entry = LABELS[key as string];
-      return entry ? entry[index] : String(key);
+  // the language list: once
+  useEffect(() => {
+    let alive = true;
+    getRequest("languages", { planguageid: languageId }).then(({ data, error }) => {
+      const rows = (!error && data && data.data) || [];
+      if (alive && rows.length) {
+        setLanguages(
+          rows.map((row: any) => ({
+            ...row,
+            language_id: Number(row.language_id),
+          })),
+        );
+      }
+    });
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // the texts: every time the language changes
+  useEffect(() => {
+    let alive = true;
+    setTexts({});
+    getRequest("labels", { planguageid: languageId }).then(({ data, error }) => {
+      const rows = (!error && data && data.data) || [];
+      if (!alive) {
+        return;
+      }
+      const next: { [key: string]: string } = {};
+      rows.forEach((row: any) => {
+        if (row.key && row.text) {
+          next[row.key] = row.text;
+        }
+      });
+      setTexts(next);
+    });
+    return () => {
+      alive = false;
     };
   }, [languageId]);
 
+  const value = useMemo(() => {
+    const index = languageId === 2 ? 1 : 0;
+    const current = languages.find((item) => item.language_id === languageId);
+    const isRtl = current
+      ? current.direction === "rtl"
+      : RTL_IDS.indexOf(languageId) >= 0;
+    return {
+      translate: (key: LabelKey) => {
+        const fromDb = texts[key as string];
+        if (fromDb) {
+          return fromDb;
+        }
+        const entry = LABELS[key as string];
+        return entry ? entry[index] : String(key);
+      },
+      languages,
+      current,
+      isRtl,
+    };
+  }, [languageId, languages, texts]);
+
   return (
-    <LabelsContext.Provider value={translate}>
-      {children}
-    </LabelsContext.Provider>
+    <LabelsContext.Provider value={value}>{children}</LabelsContext.Provider>
   );
 };
 
-export const useLabels = () => useContext(LabelsContext);
+export const useLabels = () => useContext(LabelsContext).translate;
+export const useLanguages = () => {
+  const { languages, current, isRtl } = useContext(LabelsContext);
+  return { languages, current, isRtl };
+};
 export const useIsArabic = () => useMakeSelectCurrentLanguageId() === 2;

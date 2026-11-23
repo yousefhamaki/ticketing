@@ -8,7 +8,7 @@
  * the screen sends filters only - never a "who am I" condition.
  */
 import React, { useCallback, useState } from "react";
-import { Tabs } from "antd";
+import { Button, Icon, Tabs } from "antd";
 import { ColumnProps } from "antd/lib/table";
 import { useHistory } from "react-router-dom";
 import { Flex, PageTitle, ShadowSection } from "../../components/commons";
@@ -23,6 +23,7 @@ import { useBasicQuery } from "../../hooks";
 import { useLabels } from "../../labels";
 import { PAGE_SIZE, TICKET_VIEWS } from "./constants";
 import FiltersView, { TicketFiltersType } from "./partials/FiltersView";
+import NewTaskModal from "./partials/NewTaskModal";
 import { ticketPath } from "../../routes/constants";
 
 const INITIAL_FILTERS: TicketFiltersType = {
@@ -38,6 +39,7 @@ const TicketsPage = () => {
   const [filters, setFilters] = useState<TicketFiltersType>(INITIAL_FILTERS);
   const [offset, setOffset] = useState(0);
   const [rows, setRows] = useState<any[]>([]);
+  const [taskOpen, setTaskOpen] = useState(false);
 
   const { loading, runQuery } = useBasicQuery({
     apiId: "tickets",
@@ -128,7 +130,17 @@ const TicketsPage = () => {
     <>
       <Flex justify="space-between" margin="0 0 12px">
         <PageTitle>{labels("tickets")}</PageTitle>
+        {/* 23-11-2026 NEW: staff open an internal task (the service ticket_dml already took it) */}
+        <Button type="primary" onClick={() => setTaskOpen(true)}>
+          <Icon type="plus" /> {labels("newTask")}
+        </Button>
       </Flex>
+
+      <NewTaskModal
+        visible={taskOpen}
+        onClose={() => setTaskOpen(false)}
+        onCreated={(ticketId) => history.push(ticketPath(ticketId))}
+      />
 
       <ShadowSection>
         <Tabs

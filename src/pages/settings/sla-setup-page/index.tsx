@@ -45,6 +45,8 @@ const toClock = (minute?: number) =>
 
 const SlaSetupPage = () => {
   const labels = useLabels();
+  const escModeName = (value?: string) =>
+    value === "PCT" ? labels("escModePct") : labels("escModeFixed");
   const theme = useTheme();
   const [payload, setPayload] = useState<PayloadType>(EMPTY);
 
@@ -150,9 +152,11 @@ const SlaSetupPage = () => {
         type="info"
         showIcon
         style={{ marginBottom: 12 }}
-        message={`${labels("sla")}: ${labels("internalNote")} = ${setting(
+        // 23-11-2026 OLD: "SLA: internal note = 50% · ESC_MODE = FIXED"
+        //            NEW: the same two settings in words
+        message={`${labels("internalSla")}: ${setting(
           "INTERNAL_SLA_PCT",
-        )}%  ·  ESC_MODE = ${setting("ESC_MODE")}`}
+        )}%  ·  ${labels("escMode")}: ${escModeName(setting("ESC_MODE"))}`}
       />
 
       <ShadowSection>
@@ -214,7 +218,7 @@ const SlaSetupPage = () => {
               apiId="escalationLevelDml"
               identity={["level_no"]}
               onDone={reload}
-              note={`ESC_MODE = ${setting("ESC_MODE")}`}
+              note={`${labels("escMode")}: ${escModeName(setting("ESC_MODE"))}`}
               fields={[
                 { name: "description_p", label: labels("nameEn"), type: "text", max: 40 },
                 { name: "description_s", label: labels("nameAr"), type: "text", max: 40 },

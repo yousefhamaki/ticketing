@@ -47,9 +47,11 @@ const ClientsPage = () => {
 
   const columns: ColumnProps<any>[] = [
     { title: labels("client"), dataIndex: "client_name" },
-    { title: "site_prefix", dataIndex: "site_prefix", width: 110 },
+    // 23-11-2026 OLD: raw column names (site_prefix, env, weight, contract, end, off)
+    //            NEW: labels in the user language; an ended contract is red
+    { title: labels("sitePrefix"), dataIndex: "site_prefix", width: 110 },
     {
-      title: "env",
+      title: labels("environment"),
       dataIndex: "env_type",
       width: 90,
       render: (value: string) => (
@@ -59,15 +61,34 @@ const ClientsPage = () => {
       ),
     },
     { title: labels("branch"), dataIndex: "branches", width: 90 },
-    { title: "weight", dataIndex: "weight", width: 90 },
-    { title: "contract", dataIndex: "contract_code", width: 120 },
-    { title: "end", dataIndex: "contract_end_date", width: 120 },
+    { title: labels("weight"), dataIndex: "weight", width: 90 },
+    { title: labels("contractCode"), dataIndex: "contract_code", width: 120 },
+    {
+      title: labels("endDate"),
+      dataIndex: "contract_end_date",
+      width: 140,
+      render: (value: string) => {
+        if (!value) {
+          return null;
+        }
+        const ended = value < new Date().toISOString().slice(0, 10);
+        return ended ? (
+          <Tag color={theme.colors.error}>
+            {value} · {labels("expired")}
+          </Tag>
+        ) : (
+          value
+        );
+      },
+    },
     {
       title: "",
       dataIndex: "active_flag",
       width: 80,
       render: (value: string) =>
-        value === "Y" ? null : <Tag color={theme.colors.error}>off</Tag>,
+        value === "Y" ? null : (
+          <Tag color={theme.colors.error}>{labels("inactive")}</Tag>
+        ),
     },
   ];
 

@@ -239,6 +239,10 @@ const ClientUserRequestsPage = () => {
         cancelText={labels("cancel")}
         onCancel={() => setEditing(null)}
         onOk={onSave}
+        // 23-11-2026 NEW: Save stays off until the mandatory English name is written
+        okButtonProps={{
+          disabled: !!editing && !(editing.full_name_p || "").trim(),
+        }}
       >
         {editing ? (
           <Flex column align="stretch" gap={10}>
@@ -246,7 +250,8 @@ const ClientUserRequestsPage = () => {
 
             <Flex gap={10}>
               <Input
-                placeholder={labels("nameEn")}
+                // 23-11-2026 NEW: "*" marks the one mandatory field (the server refuses without it)
+                placeholder={`${labels("nameEn")} *`}
                 maxLength={100}
                 value={editing.full_name_p || ""}
                 onChange={(event) =>

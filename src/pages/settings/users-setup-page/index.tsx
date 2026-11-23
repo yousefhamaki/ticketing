@@ -26,7 +26,7 @@ import { useTheme } from "styled-components";
 import { Flex, PageTitle, ShadowSection } from "../../../components/commons";
 import ExsysTable from "../../../components/exsys-table";
 import { useBasicMutation, useBasicQuery, useLookups } from "../../../hooks";
-import { useLabels } from "../../../labels";
+import { useLabels, useLanguages } from "../../../labels";
 
 const PAGE_SIZE = 25;
 
@@ -58,6 +58,7 @@ interface UserRowType {
 
 const UsersSetupPage = () => {
   const labels = useLabels();
+  const { languages } = useLanguages();
   const theme = useTheme();
   const { lookups } = useLookups();
 
@@ -424,8 +425,14 @@ const UsersSetupPage = () => {
                   setEditing({ ...editing, language_id: value })
                 }
               >
-                <Select.Option value={2}>العربية</Select.Option>
-                <Select.Option value={1}>English</Select.Option>
+                {/* 23-11-2026 OLD: Arabic / English only
+                    NEW: every active language of ETK_LANGUAGE (script ETKT_11)
+                    REASON: a user can now work in Urdu, French ... */}
+                {languages.map((item) => (
+                  <Select.Option key={item.language_id} value={item.language_id}>
+                    {item.native_name}
+                  </Select.Option>
+                ))}
               </Select>
 
               {!isClientUser ? (

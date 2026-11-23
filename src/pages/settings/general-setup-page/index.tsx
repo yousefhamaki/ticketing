@@ -137,7 +137,7 @@ const GeneralSetupPage = () => {
               apiId="settingDml"
               identity={["setting_key"]}
               onDone={reload}
-              note="The packages read these at run time; the service checks each value's shape."
+              note={labels("hintSettings")}
               fields={[
                 { name: "setting_value", label: labels("settingValue"), type: "text", max: 400 },
                 { name: "description", label: labels("description"), type: "textarea" },
@@ -155,7 +155,7 @@ const GeneralSetupPage = () => {
               canAdd
               onDone={reload}
               newDefaults={{ salable_flag: "Y", active_flag: "Y" }}
-              note="MODULE_ID matches EX_PAGE_MASTER in EXSYS."
+              note={labels("hintModules")}
               fields={[
                 {
                   name: "module_id",
@@ -223,7 +223,7 @@ const GeneralSetupPage = () => {
               canAdd
               onDone={reload}
               newDefaults={{ weight: 1, active_flag: "Y" }}
-              note="The weight divides the ticket count in every client comparison."
+              note={labels("hintBranchTypes")}
               fields={[
                 {
                   name: "branch_type_code",
@@ -253,7 +253,7 @@ const GeneralSetupPage = () => {
               identity={["model_id"]}
               onDone={reload}
               newDefaults={{ purpose: "C", default_flag: "N", active_flag: "Y" }}
-              note="Only one model stays the default of each purpose."
+              note={labels("hintAiModels")}
               fields={[
                 {
                   name: "purpose",

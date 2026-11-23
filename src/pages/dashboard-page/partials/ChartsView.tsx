@@ -79,7 +79,7 @@ const ChartsView = ({
             options={{
               ...options,
               legend: { display: false },
-              scales: { yAxes: [{ ticks: { beginAtZero: true } }] },
+              scales: { yAxes: [{ ticks: { beginAtZero: true, precision: 0 } /* 23-11-2026: whole numbers only (was 0.2, 0.4 ...) */ }] },
             }}
           />
         </Panel>
@@ -89,7 +89,7 @@ const ChartsView = ({
             options={{
               ...options,
               legend: { display: false },
-              scales: { yAxes: [{ ticks: { beginAtZero: true } }] },
+              scales: { yAxes: [{ ticks: { beginAtZero: true, precision: 0 } /* 23-11-2026: whole numbers only (was 0.2, 0.4 ...) */ }] },
             }}
           />
         </Panel>
@@ -120,7 +120,7 @@ const ChartsView = ({
             }}
             options={{
               ...options,
-              scales: { yAxes: [{ ticks: { beginAtZero: true } }] },
+              scales: { yAxes: [{ ticks: { beginAtZero: true, precision: 0 } /* 23-11-2026: whole numbers only (was 0.2, 0.4 ...) */ }] },
             }}
           />
         </div>
